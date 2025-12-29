@@ -1,0 +1,144 @@
+---
+title: "Walkenhorts Family Visit Catalogue Scraping"
+output: html_document
+date: "2025-12-26"
+---
+
+The following markdown takes the Walkenhorst family visits pdf catalogue, and perfroms pdf scraping creating a data set of items and prices.
+
+```{r}
+library(tidyverse) # basic functions
+library(conflicted) # force conflicts to errors
+library(pdftools) # read in pdf documents
+
+```
+
+
+```{r}
+pdf <- pdf_text("~/Documents/PROJECT-CLONES/Data-Storage/Walkenhorst/family visit catalogue.pdf") # read in data
+
+pdf <- pdf[-c(1,2)] # drop first two pages with no information
+```
+
+```{r}
+PDF_Scraper <- function(page_number){
+  
+  pdf <- get("pdf", parent.frame()) # get from global environment into sub-environment
+  
+  page <- pdf[[page_number]]# index by page number
+  
+  lines <- str_split(page, "\n")[[1]] # split document on line breaks
+  
+  lines_df <- data.frame(lines) # convert to data frame
+  
+  lines_df <- lines_df[-c(1, 2, 67, 68),] # drop header and footer
+  
+  lines_df <- data.frame(lines_df) # re-covert to data frame
+  
+  lines_df <- lines_df |> 
+    rename(V1 = lines_df) |> # rename
+    mutate(V1 = trimws(V1, which = "left", whitespace = " ")) |> # remove extra whitespace
+    mutate(count = str_count(V1, "\\b\\d{4,5}-\\d{3}\\b")) |> # unneeded but leaving in so I dont have to change another line of code
+    mutate(position = str_locate_all(V1, "\\b\\d{4,5}-\\d{3}\\b")) |> # locate positions of item numbers
+    mutate(position = map(position, ~ sort(as.numeric(.x)[as.numeric(.x) >= 10]))) |> # drop initial item position
+    mutate(na=map_lgl(.x = position, .f = is_empty)) |> # test for empty positions where only one item
+    mutate(position_dollar = str_locate_all(V1, "\\$\\d{1,2}\\.\\d{2}")) |>  # dollar positions
+    mutate(position_dollar = map2(
+              position_dollar, na,
+              ~ if (.y == FALSE) character(0) else .x)) |> # dollar position empty if item position valid
+    mutate(break_code = map_chr(
+                      position,
+                      ~ if (length(.x) == 0) NA_character_ else .x[1] # take first position for item code break
+                    ),
+           break_dollar = map_chr(
+        position_dollar,
+        ~ if (length(.x) == 0) NA_character_ else .x[length(.x)] # take last position for dollar break
+      )
+    ) |> 
+    mutate(break_code = as.numeric(break_code), 
+           break_dollar = as.numeric(break_dollar) + 1) |> # convert to numeric and add one to dollar break position
+    mutate(break_point = coalesce(break_code,
+                                  break_dollar)) |> # coalesce to column of break points
+    select(-c(count:break_dollar)) |> # drop extra cols
+    mutate(first = str_sub(V1, 1, break_point-1), # first item
+           second = str_sub(V1, break_point, str_length(V1))) |> # second item
+    select(-c(V1, break_point))# drop extra data
+    
+  Full_Data <- data.frame(item = lines_df$first) |> # data frame as list of items, left hand column first
+    bind_rows(data.frame(item = lines_df$second)) # right hand column second
+  
+  Full_Data <- Full_Data |> 
+    mutate(item = trimws(item, which = "left", whitespace = " ")) |> # remove extra whitespace from left hand side
+    mutate(item_detect = str_detect(item, "\\b\\d{4,5}-\\d{3}\\b")) |> # detect item v item category
+    mutate(Category = case_when(item_detect == FALSE ~ item,
+                                TRUE ~ NA_character_)) |> # create column for walkenhorst categories
+    select(Category, item, item_detect) |> # reorder
+    fill(Category, .direction = "down") |> # fill category in down direction
+    dplyr::filter(item_detect == TRUE) |> # drop items with just categories
+    select(-c(item_detect)) |> # drop test
+    mutate(item_number = str_extract(item, "\\b\\d{4,5}-\\d{3}\\b"), # extract item number
+           item = str_remove(item, "\\b\\d{4,5}-\\d{3}\\b")) |> # remove item number from description
+    mutate(kosher = str_detect(item, "ⓚ"), # test if kosher
+           item = str_remove(item, "ⓚ")) |> # remove kosher symbol
+    mutate(price = str_extract(item, "\\$\\d{1,2}\\.\\d{2}"), # extract price
+           item = str_remove(item, "\\$\\d{1,2}\\.\\d{2}")) |> # remove price item description
+    mutate(weight = str_extract(item, "\\d{1,3}\\.?(?:[^a-zA-Z]*?)oz\\."), # extract weight
+           weight2 = str_extract(item, "\\d{1,3}\\.?(?:[^a-zA-Z]*?)oz")) |> # extract weight different format
+    mutate(weight = coalesce(weight, weight2)) |> # coalesnce to one weight variable
+    select(-c(weight2)) |> # drop extraneous variable
+    mutate(item = trimws(item, which = "both", whitespace = " "))|> 
+    mutate(item = trimws(item, which = "both", whitespace = "[\t\r\n]")) # format to remove white space
+  
+  return(Full_Data) # return data
+  
+}
+
+dataList <- list() # empty item list
+
+pages <- 1:31 # pages 1-31
+
+dataList <- lapply(pages, PDF_Scraper) # apply function to pages and save
+```
+
+```{r}
+for (i in 2:31){
+  
+  dataList[[1]] <- dataList[[1]] |> 
+    bind_rows(dataList[[i]]) # bind each page to first page
+
+}
+
+Full_Data <- dataList[[1]] # extact first page from list that now contains full data
+```
+
+```{r}
+rm(list = ls(pattern = "dataList|i|pages|pdf|PDF_Scraper")) # drop unnecessary environmental variables
+
+```
+
+```{r}
+Full_Data <- Full_Data |> 
+  mutate(Category = trimws(Category, which = "both", whitespace = "[\t\r\n]"),
+         Category = trimws(Category, which = "both", whitespace = " ")) |> # clean category labels
+  fill(Category, .direction = "down") # fill in downward direction for categories that span multiple pages
+
+```
+
+```{r}
+Full_Data <- Full_Data |> 
+  mutate(weight = recode(weight,
+                         "8.7” 12 oz." = "12 oz.")) |> 
+  mutate(weight = str_remove_all(weight, "oz."),
+         weight = str_remove_all(weight, "oz"),
+         weight = trimws(weight, which = "right", whitespace = " "),
+         weight = recode(weight,
+                         "8.8." = "8.8",
+                         "5 ."  = "5",
+                         "2 5/8" = "2.625"),
+         weight = as.numeric(weight)) |> 
+  mutate(weight = paste(weight, " oz.")) # clean weight vairable to consistent format and correct mistakes
+
+```
+
+
+
