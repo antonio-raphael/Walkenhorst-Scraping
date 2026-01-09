@@ -20,6 +20,7 @@ pdf <- pdf_text("~/Documents/PROJECT-CLONES/Data-Storage/Walkenhorst/family visi
 pdf <- pdf[-c(1,2)] # drop first two pages with no information
 ```
 
+
 ```{r}
 PDF_Scraper <- function(page_number){
   
@@ -140,5 +141,14 @@ Full_Data <- Full_Data |>
 
 ```
 
+```{r}
+Full_Data <- Full_Data |> 
+  mutate(item = trimws(item, which = "both", whitespace = " "))
 
+```
 
+```{r}
+write_csv(Full_Data,
+          "~/Documents/PROJECT-CLONES/Data-Storage/Walkenhorst/Scraped_Catalogue.csv")
+
+```
