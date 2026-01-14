@@ -1,0 +1,55 @@
+---
+title: "Combining-Scraped-Data"
+output: html_document
+date: "2026-01-14"
+---
+
+```{r}
+library(tidyverse)
+library(jsonlite)
+
+```
+
+```{r}
+files <- list.files(
+  path = "~/Documents/PROJECT-CLONES/Walkenhorst-Scraping/01. Scraping/Scraped-JSON-Files/",
+  pattern = "\\.json$",
+  full.names = TRUE
+)
+
+df <- bind_rows(lapply(files, function(f) {
+  fromJSON(f, flatten = TRUE) |>
+    mutate(source_file = basename(f))
+}))
+
+```
+
+```{r}
+Products_Categories <- df |> 
+  select(`__typename`,
+         name,
+         catalogProductType,
+         price,
+         priceInfo.linePrice,
+         priceInfo.linePriceDisplay,
+         priceInfo.unitPrice,
+         source_file) |> 
+  dplyr::filter(`__typename` == "Product") |> 
+  select(-c(`__typename`)) |> 
+  select(source_file, everything()) |> 
+  distinct()
+
+Products_Only <- Products_Categories |> 
+  select(-c(source_file, 
+            priceInfo.linePriceDisplay)) |> 
+  distinct()
+```
+
+
+```{r}
+write_csv(Products_Categories,
+          "~/Documents/PROJECT-CLONES/Walkenhorst-Scraping/01. Scraping/Scraped-JSON-Files/Products_Categories.csv")
+
+write_csv(Products_Only,
+          "~/Documents/PROJECT-CLONES/Walkenhorst-Scraping/01. Scraping/Scraped-JSON-Files/Products_Only.csv")
+```
