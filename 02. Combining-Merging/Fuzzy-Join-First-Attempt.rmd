@@ -1,0 +1,111 @@
+---
+title: "Fuzzy-Merging-Crackers"
+output: html_document
+date: "2026-01-15"
+---
+
+```{r}
+library(tidyverse)
+library(conflicted)
+library(stringi)
+library(stringdist)
+library(fuzzyjoin)
+library(phonics)
+```
+
+```{r}
+Catalogue <- read_csv(paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+                             "Data-Storage/Walkenhorst/Scraped_Catalogue.csv"))
+
+Products <- read_csv(paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+                            "Walkenhorst-Scraping/01. Scraping/Scraped-JSON-Files/",
+                            "Full-Products-Data/Products_Categories.csv"))
+```
+
+
+```{r}
+Products <- Products |> 
+  dplyr::filter(source_file == "walmart_crackers.json")
+
+Catalogue <- Catalogue |> 
+  dplyr::filter(Category == "CRACKERS")
+```
+
+
+```{r}
+Catalogue <- Catalogue |> 
+  rename(price_catalogue  = price,
+         weight_catalogue = weight)
+
+Products <- Products |> 
+  rename(price_walmart = price,
+         item = name)
+```
+
+
+```{r}
+normalize_text <- function(data) {
+  
+  data <- data |> 
+    mutate(item_normalized = tolower(item),
+           item_normalized = iconv(item_normalized, 
+                                   from = "UTF-8", 
+                                   to = "ASCII//TRANSLIT"),
+           item_normalized = gsub("[^a-z0-9 ]", 
+                                  " ", 
+                                  item_normalized),
+           item_normalized = gsub("\\b(kg|g|lb|oz|pack|pcs|pc|x)\\b", 
+                                  "", 
+                                  item_normalized),
+           item_normalized = gsub("\\s+",
+                                  " ", 
+                                  item_normalized),
+           item_normalized = tolower(item_normalized),
+           item_normalized = trimws(item_normalized, 
+                                    which = "both", 
+                                    whitespace = "[\t\r\n]"),
+           item_normalized = trimws(item_normalized, 
+                                    which = "both", 
+                                    whitespace = " "))
+  
+  return(data)
+}
+
+Products <- normalize_text(Products)
+Catalogue <- normalize_text(Catalogue)
+```
+
+
+```{r}
+tokenize_sorted <- function(x) {
+  x |>
+    str_split(" ") |>
+    lapply(sort) |>
+    vapply(paste, character(1), collapse = " ")
+}
+
+Products <- Products |>
+  mutate(name_tokens_sorted = tokenize_sorted(item_normalized))
+
+Catalogue <- Catalogue |>
+  mutate(name_tokens_sorted = tokenize_sorted(item_normalized))
+
+```
+
+```{r}
+temp <- stringdist_left_join(
+  Catalogue, Products,
+  by = "name_tokens_sorted",
+  method = "jw",
+  max_dist = .8,
+  distance_col = "distance"
+)
+
+temp <- stringdist_left_join(
+  Catalogue, Products,
+  by = "name_tokens_sorted",
+  method = "qgram",
+  q = 2,
+  max_dist = 5
+)
+```
