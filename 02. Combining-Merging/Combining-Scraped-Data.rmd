@@ -114,11 +114,11 @@ Products_Categories <- Products_Categories |>
 Cleaned_Unit_Prices <- Products_Categories |> 
   mutate(unit_price = priceInfo.unitPrice) |> 
   select(unit_price) |> 
-  distinct() |>  
+  distinct() |> 
   mutate(unit_price_original = unit_price) |> 
   select(unit_price_original, unit_price) |> 
   mutate(weights = str_detect(unit_price, "oz|lb")) |> 
-  dplyr::filter(weights == TRUE) |>  
+  dplyr::filter(weights == TRUE) |> 
   mutate(cents_oz = str_detect(unit_price, "¢/oz|¢/fl oz"),
          cents_lb = str_detect(unit_price, "¢/lb"),
          unit_price = str_remove_all(unit_price, " ¢/oz"),
@@ -173,8 +173,7 @@ Products_Categories <- Products_Categories |>
   dplyr::filter(is.na(clean_unit_price)) |> 
   select(-c(catalogProductType:priceInfo.unitPrice)) |> 
   select(-c(clean_unit_price)) |> 
-  bind_rows(To_Aggregate) |> 
-  select(-c(source_file)) 
+  bind_rows(To_Aggregate) 
 
 # 15674
 ```
