@@ -104,8 +104,20 @@ Products_Categories <- Products_Categories |>
       regex(
         "\\b\\d+\\s*g\\s*protein\\b",
         ignore_case = TRUE
-      ))
+      )),
+    name = str_remove_all(
+      name,
+      regex(
+        "(?i)\\b(\\d+(?:\\.\\d+)?\\s*(?:l|liter|liters|qt|gallon|lb)\\b(?:\\s*bottle|\\s*bag)?|#\\s*(?:l|liter|liters|gallon|lb)\\b(?:\\s*bottle|\\s*bag)?)",
+        ignore_case = TRUE
+      )),
+    name = str_remove_all(
+      name,
+      ", , Bottle")
    ) 
+
+
+
 
 ```
 
@@ -117,18 +129,24 @@ Cleaned_Unit_Prices <- Products_Categories |>
   distinct() |> 
   mutate(unit_price_original = unit_price) |> 
   select(unit_price_original, unit_price) |> 
-  mutate(weights = str_detect(unit_price, "oz|lb")) |> 
+  mutate(weights = str_detect(unit_price, "oz|lb|ounces|/gl|¢/l")) |> 
   dplyr::filter(weights == TRUE) |> 
-  mutate(cents_oz = str_detect(unit_price, "¢/oz|¢/fl oz"),
+  mutate(cents_oz = str_detect(unit_price, "¢/oz|¢/fl oz|¢/ounces"),
          cents_lb = str_detect(unit_price, "¢/lb"),
+         dollars_gallon = str_detect(unit_price, "/gl"),
+         liter_detect = str_detect(unit_price, "^\\d+(?:\\.\\d+)?\\s*¢/l$"),
          unit_price = str_remove_all(unit_price, " ¢/oz"),
          unit_price = str_remove_all(unit_price, " ¢/fl oz"),
          unit_price = str_remove_all(unit_price, " ¢/lb"),
+         unit_price = str_remove_all(unit_price, " ¢/l"),
+         unit_price = str_remove_all(unit_price, "(\\$|/gl)"),
          clean_unit_price = case_when(cents_oz == TRUE ~ as.numeric(unit_price)/100,
                                       cents_lb == TRUE ~ (as.numeric(unit_price)/16)/100,
+                                      dollars_gallon == TRUE ~ (as.numeric(unit_price)/128),
+                                      liter_detect == TRUE ~ (as.numeric(unit_price)/33.8140227),
                                       TRUE ~ NA_integer_)
          ) |> 
-  select(-c(weights:cents_lb)) |> 
+  select(-c(weights:liter_detect)) |> 
   mutate(pound = str_detect(unit_price, "/lb"),
          unit_price = str_remove_all(unit_price, "/oz|/fl oz|/lb"),
          unit_price = gsub("$", "", unit_price, fixed = TRUE),
@@ -142,19 +160,62 @@ Cleaned_Unit_Prices <- Products_Categories |>
   select(-c(unit_price,
             clean_unit_price_2,
             pound)) |> 
-  rename(unit_price = unit_price_original)
+  rename(unit_price = unit_price_original) |> 
+  mutate(unit_type = "price per ounce")
 
+```
 
+```{r}
+Clean_Unit_Prices_Count <- Products_Categories |> 
+  mutate(unit_price = priceInfo.unitPrice) |> 
+  select(unit_price) |> 
+  distinct() |> 
+  mutate(unit_price_original = unit_price) |> 
+  select(unit_price_original, unit_price) |> 
+  mutate(weights = str_detect(unit_price, "oz|lb|ounces|/gl|¢/l")) |> 
+  dplyr::filter(weights == FALSE)  |> 
+  dplyr::filter(unit_price_original != "") |> 
+  select(-c(weights)) |> 
+  mutate(cents_counts = str_detect(unit_price, "¢/count"),
+         cents_each = str_detect(unit_price, "¢/ea"),
+         dollars_each = str_detect(unit_price, "\\$\\d+(?:\\.\\d{2})?/ea"),
+         hundred = str_detect(unit_price, "/100 ct"),
+         dollars_count = str_detect(unit_price, "\\$\\d+(?:\\.\\d{2})?/count")) |> 
+  mutate(clean_unit_price = case_when(cents_counts == TRUE ~ as.numeric(str_remove(unit_price, "¢/count"))/100,
+                                      cents_each == TRUE ~ as.numeric(str_remove(unit_price, "¢/ea"))/100,
+                                      dollars_each == TRUE ~ as.numeric(gsub("(\\$|/ea)", "", unit_price)),
+                                      hundred == TRUE ~ as.numeric(gsub("(\\$|/\\d+\\s*ct)", "", unit_price))/100,
+                                      dollars_count == TRUE ~ as.numeric(gsub("(\\$|/count)", "", unit_price)),
+                                      TRUE ~ NA_integer_)) |> 
+  select(-c(unit_price,cents_counts, cents_each, dollars_each, hundred, dollars_count)) |> 
+  rename(unit_price = unit_price_original) |> 
+  mutate(unit_type = "price per count")
+
+  
+
+```
+
+```{r}
+Cleaned_Unit_Prices <- Cleaned_Unit_Prices |> 
+  bind_rows(Clean_Unit_Prices_Count)
+
+```
+
+```{r}
 Products_Categories <- Products_Categories |> 
   mutate(unit_price = priceInfo.unitPrice) |> 
   left_join(Cleaned_Unit_Prices,
             by = "unit_price") 
 ```
 
+```{r}
+rm(list = ls(pattern = "Clean"))
+
+```
 
 ```{r}
 To_Aggregate <- Products_Categories |> 
-  dplyr::filter(!is.na(clean_unit_price))|> 
+  dplyr::filter(!is.na(clean_unit_price)) |> 
   mutate(name = str_remove(name, "[^A-Za-z]+$"),
          name = str_remove(name, "\\.+$"),
          name = trimws(name, which = "both", whitespace = " "),
@@ -165,7 +226,7 @@ To_Aggregate <- Products_Categories |>
   arrange(name, .by_group = TRUE) |> 
   ungroup() |> 
   select(-c(catalogProductType:unit_price)) |> 
-  group_by(source_file, name) |> 
+  group_by(source_file, name, unit_type) |> 
   summarise(clean_unit_price = mean(clean_unit_price)) |> 
   ungroup() 
 
