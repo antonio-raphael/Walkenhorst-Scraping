@@ -137,7 +137,7 @@ between Walkenhorst and Walmart. This uses the price per unit ratio for matched 
 Walmart is subtracted from the price from Walkenhorst, divided by the price from Walmart, and multiplied
 by 100:
 
-$((P_{Walkenhorst} - P_{Walmart}) / P_{Walmart})*100$
+$((P_{Walkenhorst} - P_{Walmart})) / P_{Walmart})*100$
 
 
 Once the mark-up was calcuated, there were some outliers that needed to be addressed. First, there 
