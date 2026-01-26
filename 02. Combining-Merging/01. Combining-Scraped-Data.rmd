@@ -13,12 +13,12 @@ library(jsonlite)
 ```{r}
 files <- list.files(
   path = "~/Documents/PROJECT-CLONES/Walkenhorst-Scraping/01. Scraping/Scraped-JSON-Files/",
-  pattern = "\\.json$",
+  pattern = "\\.json$", # get file paths and files for all json files
   full.names = TRUE
 )
 
 df <- bind_rows(lapply(files, function(f) {
-  fromJSON(f, flatten = TRUE) |>
+  fromJSON(f, flatten = TRUE) |> # read all files in at once
     mutate(source_file = basename(f))
 }))
 
@@ -33,21 +33,22 @@ Products_Categories <- df |>
          priceInfo.linePrice,
          priceInfo.linePriceDisplay,
          priceInfo.unitPrice,
-         source_file) |> 
-  dplyr::filter(`__typename` == "Product") |> 
-  select(-c(`__typename`)) |> 
-  select(source_file, everything()) |> 
-  distinct()
+         source_file) |> # select relevant variables
+  dplyr::filter(`__typename` == "Product") |> # select product data only not other website data
+  select(-c(`__typename`)) |> # drop type
+  select(source_file, everything()) |>  # reorder
+  distinct() # de-duplicate any repeat products
 
 Products_Only <- Products_Categories |> 
   select(-c(source_file, 
-            priceInfo.linePriceDisplay)) |> 
-  distinct()
+            priceInfo.linePriceDisplay)) |> # drop category variables
+  distinct() # de-duplicate any repeat products
 ```
+
 
 ```{r}
 Products_Categories <- Products_Categories |> 
-  dplyr::filter(!str_detect(name, "Great Value")) |> 
+  dplyr::filter(!str_detect(name, "Great Value")) |> # drop walmart brand stuff
   mutate(name =  str_remove_all(
     name,
     regex(
@@ -116,13 +117,13 @@ Products_Categories <- Products_Categories |>
       ", , Bottle")
    ) 
 
-
-
-
+# the above formats the strings to remove quantities from the product title, this will allow us to aggregate the product unit price and facilitate a better fuzzy join
 ```
 
 
 ```{r}
+# The following standardizes all the unit prices for 
+
 Cleaned_Unit_Prices <- Products_Categories |> 
   mutate(unit_price = priceInfo.unitPrice) |> 
   select(unit_price) |> 

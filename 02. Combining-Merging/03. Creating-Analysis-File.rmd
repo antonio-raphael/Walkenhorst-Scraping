@@ -1,0 +1,78 @@
+---
+title: "Untitled"
+output: html_document
+date: "2026-01-24"
+---
+
+```{r}
+library(tidyverse)
+library(conflicted)
+```
+
+```{r}
+data <- read_csv("~/Documents/PROJECT-CLONES/Data-Storage/Walkenhorst/Merged_Walkenhorst_Walmart.csv")
+
+```
+
+
+```{r}
+data <- data |> 
+  dplyr::filter(Walkenhorst_weight != "NA  oz.") |> 
+  mutate(Walkenhorst_weight = str_remove(Walkenhorst_weight, " oz."),
+         Walkenhorst_weight = as.numeric(Walkenhorst_weight),
+         Walkenhorst_price = gsub("$", "", Walkenhorst_price, fixed = TRUE),
+         Walkenhorst_price = as.numeric(Walkenhorst_price),
+         Walkenhorst_unit_price = Walkenhorst_price/Walkenhorst_weight) |> 
+  select(-c(`...1`,
+            match_score,
+            Walkenhorst_price,
+            Walkenhorst_weight,
+            Walmart_category,
+            Walmart_unit_price)) |> 
+  select(Walkenhorst_Category,
+         contains("product"),
+         everything())
+  
+data <- data |> 
+  dplyr::filter(Walmart_unit_type != "price per count") |> 
+  select(-c(Walmart_unit_type))
+```
+
+```{r}
+Markup400 <- data |> 
+  # select(-c(Walkenhorst_product:kosher)) |> 
+  mutate(Markup = (Walkenhorst_unit_price - Walmart_clean_unit_price)/Walmart_clean_unit_price,
+         Markup = Markup * 100) |> 
+  dplyr::filter(Markup > 400) |> 
+  mutate(keep = case_when(Walkenhorst_product == "franks redhot buffalo seasoning blend" ~ 1,
+                          Walkenhorst_product == "chicken of the sea white albacore tuna" ~ 1,
+                          Walkenhorst_product == "chicken of the sea chunk light tuna togo cups  ct" ~ 1,
+                          Walkenhorst_product == "quaker apple cinnamon oatmeal express cup" ~ 1,
+                          Walkenhorst_product == "ass kickin sriracha hot sauce" ~ 1,
+                          Walkenhorst_product == "capn crunch berries cereal cup" ~ 1,
+                          Walkenhorst_product == "capn crunch cereal cup" ~ 1,
+                          TRUE ~ 0)) |> 
+  dplyr::filter(keep == TRUE)
+
+data <- data |> 
+  mutate(Markup = (Walkenhorst_unit_price - Walmart_clean_unit_price)/Walmart_clean_unit_price,
+         Markup = Markup * 100) |> 
+  dplyr::filter(Markup < 400) |> 
+  bind_rows(Markup400)
+
+
+rm(list = ls(pattern = "Markup400"))
+```
+
+
+```{r}
+data <- data |> 
+  select(-c(keep))
+```
+
+```{r}
+write_csv(data,
+          paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+                 "Walkenhorst-Scraping/03. Analysis/Analysis-Data/Analysis-Data.csv"))
+
+```
