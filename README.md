@@ -19,6 +19,8 @@ This project uses price data PDF scraped from the Walkenhorst family visits cata
 Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within the CDCR prison system.
 
 # Directory Tree
+
+```text
 .
 ├── 01. Scraping
 │   ├── PDF-Scraping
@@ -122,7 +124,7 @@ Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within th
 │       ├── Assigment-3.ipynb
 │       └── Walmart_Walkenhorst_data.csv
 └── Walkenhorst-Scraping.Rproj
-
+```
 # File Descriptions and Objectives
 
 ## 01. Scraping
