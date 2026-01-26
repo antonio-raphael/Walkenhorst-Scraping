@@ -123,7 +123,7 @@ not match well on numbers, and given time and resource constraints it was not po
 exactly on product and weight. So aggregate price-per-unit ratios were created by simply taking the mean
 of the price-per-unit variable for otherwise identical products.
 
-This data cleaning was done in R
+This data cleaning was done in R.
 
 ### 02-02 Fuzzy Joining
 
