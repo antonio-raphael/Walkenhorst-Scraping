@@ -4,6 +4,8 @@ output: html_document
 date: "2026-01-14"
 ---
 
+
+This script combines all JSON file containing scraped products data, cleans product text strings, standardizes the price-per-unit ratio, and aggregates the file to a format more conducive to fuzzy matching.
 ```{r}
 library(tidyverse)
 library(jsonlite)
@@ -122,29 +124,29 @@ Products_Categories <- Products_Categories |>
 
 
 ```{r}
-# The following standardizes all the unit prices for 
+# The following standardizes all the unit prices for things expressed in weights
 
 Cleaned_Unit_Prices <- Products_Categories |> 
-  mutate(unit_price = priceInfo.unitPrice) |> 
+  mutate(unit_price = priceInfo.unitPrice) |>  # rename
   select(unit_price) |> 
-  distinct() |> 
+  distinct() |> # distinct obs, merge back later
   mutate(unit_price_original = unit_price) |> 
   select(unit_price_original, unit_price) |> 
-  mutate(weights = str_detect(unit_price, "oz|lb|ounces|/gl|¢/l")) |> 
+  mutate(weights = str_detect(unit_price, "oz|lb|ounces|/gl|¢/l")) |> # filter to all weight (non-count) obs
   dplyr::filter(weights == TRUE) |> 
-  mutate(cents_oz = str_detect(unit_price, "¢/oz|¢/fl oz|¢/ounces"),
-         cents_lb = str_detect(unit_price, "¢/lb"),
-         dollars_gallon = str_detect(unit_price, "/gl"),
-         liter_detect = str_detect(unit_price, "^\\d+(?:\\.\\d+)?\\s*¢/l$"),
-         unit_price = str_remove_all(unit_price, " ¢/oz"),
-         unit_price = str_remove_all(unit_price, " ¢/fl oz"),
-         unit_price = str_remove_all(unit_price, " ¢/lb"),
-         unit_price = str_remove_all(unit_price, " ¢/l"),
-         unit_price = str_remove_all(unit_price, "(\\$|/gl)"),
-         clean_unit_price = case_when(cents_oz == TRUE ~ as.numeric(unit_price)/100,
-                                      cents_lb == TRUE ~ (as.numeric(unit_price)/16)/100,
-                                      dollars_gallon == TRUE ~ (as.numeric(unit_price)/128),
-                                      liter_detect == TRUE ~ (as.numeric(unit_price)/33.8140227),
+  mutate(cents_oz = str_detect(unit_price, "¢/oz|¢/fl oz|¢/ounces"), # detect format
+         cents_lb = str_detect(unit_price, "¢/lb"),# detect format
+         dollars_gallon = str_detect(unit_price, "/gl"),# detect format
+         liter_detect = str_detect(unit_price, "^\\d+(?:\\.\\d+)?\\s*¢/l$"),# detect format
+         unit_price = str_remove_all(unit_price, " ¢/oz"), # strip text formatting
+         unit_price = str_remove_all(unit_price, " ¢/fl oz"), # strip text formatting
+         unit_price = str_remove_all(unit_price, " ¢/lb"), # strip text formatting
+         unit_price = str_remove_all(unit_price, " ¢/l"), # strip text formatting
+         unit_price = str_remove_all(unit_price, "(\\$|/gl)"), # strip text formatting
+         clean_unit_price = case_when(cents_oz == TRUE ~ as.numeric(unit_price)/100, # cents/ounce to dollars/ounce
+                                      cents_lb == TRUE ~ (as.numeric(unit_price)/16)/100, #cents/pound to dollars/ounce
+                                      dollars_gallon == TRUE ~ (as.numeric(unit_price)/128), # dollars/gallor to dollars ounce
+                                      liter_detect == TRUE ~ (as.numeric(unit_price)/33.8140227), #dollars/liters to dollars/ounce
                                       TRUE ~ NA_integer_)
          ) |> 
   select(-c(weights:liter_detect)) |> 
@@ -152,41 +154,43 @@ Cleaned_Unit_Prices <- Products_Categories |>
          unit_price = str_remove_all(unit_price, "/oz|/fl oz|/lb"),
          unit_price = gsub("$", "", unit_price, fixed = TRUE),
          clean_unit_price_2 = case_when(pound == TRUE ~ as.numeric(unit_price)/16,
-                                        TRUE ~ NA_integer_)) |> 
+                                        TRUE ~ NA_integer_)) |>  # additional cleaning, same method
   mutate(clean_unit_price = coalesce(clean_unit_price,
-                                     clean_unit_price_2),
+                                     clean_unit_price_2), # coalesce for clean variable
          unit_price = as.numeric(unit_price),
          clean_unit_price = coalesce(clean_unit_price,
                                      unit_price)) |> 
   select(-c(unit_price,
             clean_unit_price_2,
-            pound)) |> 
+            pound)) |> # drop extrac
   rename(unit_price = unit_price_original) |> 
-  mutate(unit_type = "price per ounce")
+  mutate(unit_type = "price per ounce") # type of price per unit
 
 ```
 
 ```{r}
+# need to repeat the same thing with price per count
+
 Clean_Unit_Prices_Count <- Products_Categories |> 
   mutate(unit_price = priceInfo.unitPrice) |> 
   select(unit_price) |> 
   distinct() |> 
   mutate(unit_price_original = unit_price) |> 
   select(unit_price_original, unit_price) |> 
-  mutate(weights = str_detect(unit_price, "oz|lb|ounces|/gl|¢/l")) |> 
+  mutate(weights = str_detect(unit_price, "oz|lb|ounces|/gl|¢/l")) |> #weight detect
   dplyr::filter(weights == FALSE)  |> 
   dplyr::filter(unit_price_original != "") |> 
   select(-c(weights)) |> 
-  mutate(cents_counts = str_detect(unit_price, "¢/count"),
-         cents_each = str_detect(unit_price, "¢/ea"),
-         dollars_each = str_detect(unit_price, "\\$\\d+(?:\\.\\d{2})?/ea"),
-         hundred = str_detect(unit_price, "/100 ct"),
-         dollars_count = str_detect(unit_price, "\\$\\d+(?:\\.\\d{2})?/count")) |> 
-  mutate(clean_unit_price = case_when(cents_counts == TRUE ~ as.numeric(str_remove(unit_price, "¢/count"))/100,
-                                      cents_each == TRUE ~ as.numeric(str_remove(unit_price, "¢/ea"))/100,
-                                      dollars_each == TRUE ~ as.numeric(gsub("(\\$|/ea)", "", unit_price)),
-                                      hundred == TRUE ~ as.numeric(gsub("(\\$|/\\d+\\s*ct)", "", unit_price))/100,
-                                      dollars_count == TRUE ~ as.numeric(gsub("(\\$|/count)", "", unit_price)),
+  mutate(cents_counts = str_detect(unit_price, "¢/count"), # detect cents count
+         cents_each = str_detect(unit_price, "¢/ea"), # detect cents each
+         dollars_each = str_detect(unit_price, "\\$\\d+(?:\\.\\d{2})?/ea"), # detect dollars each
+         hundred = str_detect(unit_price, "/100 ct"), # detect price per 100
+         dollars_count = str_detect(unit_price, "\\$\\d+(?:\\.\\d{2})?/count")) |>  # format
+  mutate(clean_unit_price = case_when(cents_counts == TRUE ~ as.numeric(str_remove(unit_price, "¢/count"))/100, # dollars per count
+                                      cents_each == TRUE ~ as.numeric(str_remove(unit_price, "¢/ea"))/100, # dollars each
+                                      dollars_each == TRUE ~ as.numeric(gsub("(\\$|/ea)", "", unit_price)), # remove fomrmatting as numeric
+                                      hundred == TRUE ~ as.numeric(gsub("(\\$|/\\d+\\s*ct)", "", unit_price))/100, # divide by 100
+                                      dollars_count == TRUE ~ as.numeric(gsub("(\\$|/count)", "", unit_price)), # standardize
                                       TRUE ~ NA_integer_)) |> 
   select(-c(unit_price,cents_counts, cents_each, dollars_each, hundred, dollars_count)) |> 
   rename(unit_price = unit_price_original) |> 
@@ -198,7 +202,7 @@ Clean_Unit_Prices_Count <- Products_Categories |>
 
 ```{r}
 Cleaned_Unit_Prices <- Cleaned_Unit_Prices |> 
-  bind_rows(Clean_Unit_Prices_Count)
+  bind_rows(Clean_Unit_Prices_Count) # cleaned per unit data
 
 ```
 
@@ -206,41 +210,42 @@ Cleaned_Unit_Prices <- Cleaned_Unit_Prices |>
 Products_Categories <- Products_Categories |> 
   mutate(unit_price = priceInfo.unitPrice) |> 
   left_join(Cleaned_Unit_Prices,
-            by = "unit_price") 
+            by = "unit_price") # merge clean per unit data to products data
 ```
 
 ```{r}
-rm(list = ls(pattern = "Clean"))
+rm(list = ls(pattern = "Clean")) # enrivornment/object management
 
 ```
 
 ```{r}
 To_Aggregate <- Products_Categories |> 
   dplyr::filter(!is.na(clean_unit_price)) |> 
-  mutate(name = str_remove(name, "[^A-Za-z]+$"),
-         name = str_remove(name, "\\.+$"),
-         name = trimws(name, which = "both", whitespace = " "),
-         name = trimws(name, which = "both", whitespace = "[\t\r\n]"),
+  mutate(name = str_remove(name, "[^A-Za-z]+$"), # remove non-characters
+         name = str_remove(name, "\\.+$"), 
+         name = trimws(name, which = "both", whitespace = " "), # remove extra white space
+         name = trimws(name, which = "both", whitespace = "[\t\r\n]"), # remove extra special white space
          ) |> 
-  arrange(source_file) |> 
+  arrange(source_file) |> # arrange by group
   group_by(source_file) |> 
-  arrange(name, .by_group = TRUE) |> 
+  arrange(name, .by_group = TRUE) |>  # arranve by product
   ungroup() |> 
-  select(-c(catalogProductType:unit_price)) |> 
-  group_by(source_file, name, unit_type) |> 
-  summarise(clean_unit_price = mean(clean_unit_price)) |> 
-  ungroup() 
+  select(-c(catalogProductType:unit_price)) |>  # drop extra variables
+  group_by(source_file, name, unit_type) |>  # group by 
+  summarise(clean_unit_price = mean(clean_unit_price)) |> # take mean of price per unit 
+  ungroup()  # ungroup
 
 Products_Categories <- Products_Categories |> 
-  dplyr::filter(is.na(clean_unit_price)) |> 
-  select(-c(catalogProductType:priceInfo.unitPrice)) |> 
-  select(-c(clean_unit_price)) |> 
-  bind_rows(To_Aggregate) 
+  dplyr::filter(is.na(clean_unit_price)) |>  
+  select(-c(catalogProductType:priceInfo.unitPrice)) |> # drop extra variables
+  select(-c(clean_unit_price)) |>  
+  bind_rows(To_Aggregate) # bind aggreagted data
 
 # 15674
 ```
 
 ```{r}
+# export
 write_csv(Products_Categories,
           "~/Documents/PROJECT-CLONES/Walkenhorst-Scraping/01. Scraping/Scraped-JSON-Files/Full-Products-Data/Products_Categories.csv")
 

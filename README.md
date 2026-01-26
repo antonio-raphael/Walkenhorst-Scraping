@@ -137,7 +137,7 @@ between Walkenhorst and Walmart. This uses the price per unit ratio for matched 
 Walmart is subtracted from the price from Walkenhorst, divided by the price from Walmart, and multiplied
 by 100:
 
-$((P_Walkenhorst - P_Walmart) / P_Walmart)*100$
+$((P_{Walkenhorst} - P_{Walmart}) / P_{Walmart})*100$
 
 
 Once the mark-up was calcuated, there were some outliers that needed to be addressed. First, there 
@@ -152,5 +152,14 @@ observations were sorted manually, with acceptable matches kept in the data and 
 
 This file was then exported and used for all statistical testing and data visuals.
 
+## 03. Analysis
 
+This performs various aspects of the data visualization and statistical testing. For the purposes
+of this project we simply preform t tests and and visualize the data.
 
+### 01. T-Testing
+
+This tests for differences between the price per unit between walmart and walkenhorst, and if 
+the percent mark up is greater than 0. There are a total of 16 different tests performed by category
+for each variable for a total of 32 tests, and we apply a Benjamini–Hochberg correction to ensure 
+validity of our results.

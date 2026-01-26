@@ -4,6 +4,7 @@ output: html_document
 date: "2026-01-24"
 ---
 
+This script takes the merged products data, creates the percent mark up analysis variable, and drops poorly matched obs and outliers, then exports the final analysis file.
 ```{r}
 library(tidyverse)
 library(conflicted)
@@ -17,24 +18,24 @@ data <- read_csv("~/Documents/PROJECT-CLONES/Data-Storage/Walkenhorst/Merged_Wal
 
 ```{r}
 data <- data |> 
-  dplyr::filter(Walkenhorst_weight != "NA  oz.") |> 
-  mutate(Walkenhorst_weight = str_remove(Walkenhorst_weight, " oz."),
-         Walkenhorst_weight = as.numeric(Walkenhorst_weight),
-         Walkenhorst_price = gsub("$", "", Walkenhorst_price, fixed = TRUE),
-         Walkenhorst_price = as.numeric(Walkenhorst_price),
-         Walkenhorst_unit_price = Walkenhorst_price/Walkenhorst_weight) |> 
+  dplyr::filter(Walkenhorst_weight != "NA  oz.") |> # drop obs no weight
+  mutate(Walkenhorst_weight = str_remove(Walkenhorst_weight, " oz."), # remove text from weight col
+         Walkenhorst_weight = as.numeric(Walkenhorst_weight), # numeric
+         Walkenhorst_price = gsub("$", "", Walkenhorst_price, fixed = TRUE),# remove dollar sign
+         Walkenhorst_price = as.numeric(Walkenhorst_price), # convert numeric
+         Walkenhorst_unit_price = Walkenhorst_price/Walkenhorst_weight) |> # price/weight=price per unit
   select(-c(`...1`,
             match_score,
             Walkenhorst_price,
             Walkenhorst_weight,
             Walmart_category,
-            Walmart_unit_price)) |> 
+            Walmart_unit_price)) |>  # drop extraneous variables
   select(Walkenhorst_Category,
          contains("product"),
-         everything())
+         everything()) # reorder
   
 data <- data |> 
-  dplyr::filter(Walmart_unit_type != "price per count") |> 
+  dplyr::filter(Walmart_unit_type != "price per count") |>  # drop price per count, only 9 obs
   select(-c(Walmart_unit_type))
 ```
 
@@ -42,37 +43,37 @@ data <- data |>
 Markup400 <- data |> 
   # select(-c(Walkenhorst_product:kosher)) |> 
   mutate(Markup = (Walkenhorst_unit_price - Walmart_clean_unit_price)/Walmart_clean_unit_price,
-         Markup = Markup * 100) |> 
-  dplyr::filter(Markup > 400) |> 
+         Markup = Markup * 100) |> # calculate percent markup
+  dplyr::filter(Markup > 400) |> # examine high markup obs
   mutate(keep = case_when(Walkenhorst_product == "franks redhot buffalo seasoning blend" ~ 1,
                           Walkenhorst_product == "chicken of the sea white albacore tuna" ~ 1,
                           Walkenhorst_product == "chicken of the sea chunk light tuna togo cups  ct" ~ 1,
                           Walkenhorst_product == "quaker apple cinnamon oatmeal express cup" ~ 1,
                           Walkenhorst_product == "ass kickin sriracha hot sauce" ~ 1,
                           Walkenhorst_product == "capn crunch berries cereal cup" ~ 1,
-                          Walkenhorst_product == "capn crunch cereal cup" ~ 1,
+                          Walkenhorst_product == "capn crunch cereal cup" ~ 1,# stuff we can keep
                           TRUE ~ 0)) |> 
-  dplyr::filter(keep == TRUE)
+  dplyr::filter(keep == TRUE) # keep obs
 
 data <- data |> 
   mutate(Markup = (Walkenhorst_unit_price - Walmart_clean_unit_price)/Walmart_clean_unit_price,
-         Markup = Markup * 100) |> 
-  dplyr::filter(Markup < 400) |> 
-  bind_rows(Markup400)
+         Markup = Markup * 100) |> # calculate percent markup
+  dplyr::filter(Markup < 400) |> # drop >400% mark up
+  bind_rows(Markup400) # bind obs we can keep
 
 
-rm(list = ls(pattern = "Markup400"))
+rm(list = ls(pattern = "Markup400")) # environment/object management
 ```
 
 
 ```{r}
 data <- data |> 
-  select(-c(keep))
+  select(-c(keep)) # drop keep indicator
 ```
 
 ```{r}
 write_csv(data,
           paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
-                 "Walkenhorst-Scraping/03. Analysis/Analysis-Data/Analysis-Data.csv"))
+                 "Walkenhorst-Scraping/03. Analysis/Analysis-Data/Analysis-Data.csv")) # export
 
 ```
