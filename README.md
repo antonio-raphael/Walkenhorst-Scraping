@@ -21,7 +21,6 @@ Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within th
 # Directory Tree
 
 ```text
-.
 ├── 01. Scraping
 │   ├── PDF-Scraping
 │   │   ├── Catalogue-PDF-Scraping.rmd
@@ -30,60 +29,7 @@ Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within th
 │   │   ├── Full-Products-Data
 │   │   │   ├── Products_Categories.csv
 │   │   │   └── Products_Only.csv
-│   │   ├── seafood.json
-│   │   ├── walmart-honey.json
-│   │   ├── walmart-hot-sauce.json
-│   │   ├── walmart-sauce.json
-│   │   ├── walmart-spreads.json
-│   │   ├── walmart_CREAMERS.json
-│   │   ├── walmart_Diet-Supplements.json
-│   │   ├── walmart_Drink-Mixes.json
-│   │   ├── walmart_Milk-drink-mix.json
-│   │   ├── walmart_Nutrition-Supplements.json
-│   │   ├── walmart_antacidtablets.json
-│   │   ├── walmart_asian_food.json
-│   │   ├── walmart_beans.json
-│   │   ├── walmart_bottled-water.json
-│   │   ├── walmart_bread.json
-│   │   ├── walmart_candy.json
-│   │   ├── walmart_candy_sugarfree.json
-│   │   ├── walmart_cereal.json
-│   │   ├── walmart_cheese.json
-│   │   ├── walmart_chips.json
-│   │   ├── walmart_coffee.json
-│   │   ├── walmart_condiments.json
-│   │   ├── walmart_cookies.json
-│   │   ├── walmart_coughdrops.json
-│   │   ├── walmart_crackers.json
-│   │   ├── walmart_fruit-drink-mix.json
-│   │   ├── walmart_fruit.json
-│   │   ├── walmart_granolabars.json
-│   │   ├── walmart_macncheese.json
-│   │   ├── walmart_meals.json
-│   │   ├── walmart_meats.json
-│   │   ├── walmart_nuts.json
-│   │   ├── walmart_oatmeal.json
-│   │   ├── walmart_olives.json
-│   │   ├── walmart_pasta.json
-│   │   ├── walmart_pastries.json
-│   │   ├── walmart_popcorn.json
-│   │   ├── walmart_potatoesgravy.json
-│   │   ├── walmart_ramen.json
-│   │   ├── walmart_rice.json
-│   │   ├── walmart_sauces.json
-│   │   ├── walmart_seafood.json
-│   │   ├── walmart_sides.json
-│   │   ├── walmart_soda-drink-mix.json
-│   │   ├── walmart_soft-drinks-177oz.json
-│   │   ├── walmart_soft-drinks.json
-│   │   ├── walmart_soups.json
-│   │   ├── walmart_spicesseasonings.json
-│   │   ├── walmart_sports-drink-mix.json
-│   │   ├── walmart_spreads.json
-│   │   ├── walmart_sweeteners.json
-│   │   ├── walmart_taco&tortillas.json
-│   │   ├── walmart_tea.json
-│   │   └── walmart_vegetables.json
+│   │   └── Scraped-Data.zip
 │   └── Web-Scraping
 │       ├── Bottled-Water-Scraping.py
 │       ├── Coffee-Scraping.py
@@ -106,7 +52,7 @@ Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within th
 │       └── sports-drink-mix-scraping.py
 ├── 02. Combining-Merging
 │   ├── 01. Combining-Scraped-Data.rmd
-│   ├── 02. Df-merging-all.ipynb
+│   ├── 02. Products-Fuzzy-Merging.ipynb
 │   ├── 03. Creating-Analysis-File.rmd
 │   └── Archived
 │       ├── Fuzzy-Join-First-Attempt.rmd
@@ -117,6 +63,7 @@ Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within th
 │   └── T-Testing.rmd
 ├── README.md
 ├── Submissions
+│   ├── Initial Research and Data Plan.pdf
 │   ├── Submission-Jan-06
 │   │   ├── Code_assignment-Modified-Coffee.ipynb
 │   │   └── Code_assignment2.ipynb
@@ -131,3 +78,79 @@ Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within th
 
 In this sub-directory 01. scraping, there are two main tasks carried out as a part of the data collection
 process.
+
+The first is PDF scraping the family visits catalogue. Walkenhorst has two different CDCR catalogues,
+the main catalogue which proved to be too unstructured to PDF scrape effectively or accurately,
+and the family visits catalogue. The difference between family visits catalogue is simply a list of
+products that can be given to an inmate during a family visit. A phone call with a Walkenhorst 
+representative informed the project that the prices were the same between the two catalogues, the difference
+is when the products are given to the inmate.
+
+The family visits catalogue is a highly structured, table format, PDF document largely consisting of
+food items for purchase. Information for each item includes brand, item, price, weight, and kosher status,
+as well as an overarching product category.
+
+The PDF file is scraped in R and exported as a CSV.
+
+The second is webscraping. This was done in python, and the team worked to scrape relevant walmart data
+by querying relevant search terms at the walmart webpage, and extracting the JSON file that underlies
+the results webpage.
+
+## 02. Combining-Merging
+
+Combining and Merging has three different parts. The first is combining all the JSON files and
+performing initial data cleaning, the second is perform a fuzzy merge of the Walmart and Walkenhorst 
+product files, and finally is additional data cleaning of the merged file to create the analysis file.
+
+
+### 02-01 Walmart Data Cleaning
+The Walmart data required substantial cleaning before being ready for the merge. The first and most
+basic steps were to combine all of the individudal json files that came from scraping different queries
+into one master products file, and selecting all the of the variables relevant to the product.
+
+Once this was accomplished, the data required further cleaning and preparation for the fuzzy merge.
+Fuzzy merging performs best when the text strings are short, free from special characters, and 
+free from numbers. Extensive string cleaning was preformed to remove things such as counts, weights,
+or numeric descriptors which would hinder the match process.
+
+Next was to standardize the price-per-unit variable for all of the products. Some products were expressed in
+cents per ounce, dollars per ounce, dollars per pound etc. and needed to be standardized to dollars
+per ounce.
+
+Once all strings were cleaned and price-per-units were standardized, the decision was made to aggregate
+the price-per-units by products which were the same products of differing sizes. Fuzzy merging does
+not match well on numbers, and given time and resource constraints it was not possible to match products
+exactly on product and weight. So aggregate price-per-unit ratios were created by simply taking the mean
+of the price-per-unit variable for otherwise identical products.
+
+This data cleaning was done in R
+
+### 02-02 Fuzzy Joining
+
+
+### 02-03 Analysis File
+
+After fuzzy merging, a little more data cleaning remained. This was mostly to keep the relevant
+variables in the data set for analysis, such as the price-per-unit variables for Walmart and Walkenhorst,
+and the product categories. The decided that our main variable for analysis would be the percent markup
+between Walkenhorst and Walmart. This uses the price per unit ratio for matched products, the price from
+Walmart is subtracted from the price from Walkenhorst, divided by the price from Walmart, and multiplied
+by 100:
+
+$((P_Walkenhorst - P_Walmart) / P_Walmart)*100$
+
+
+Once the mark-up was calcuated, there were some outliers that needed to be addressed. First, there 
+are some observations for ramen that Walmart has priced as a fraction of a cent per ounce. Whether
+this is an error with how Walmart had calculated the price-per-unit or if it is a extreme example of
+an scale economy is unclear. However since these generated mark ups in the 10,000% range these
+observations were dropped from the data.
+
+Second, there were some observations that had a markup greater than 400%, some of these observations
+were the economy-of-scale ramen with mark ups, and some were due to poor/incorrect matching. These
+observations were sorted manually, with acceptable matches kept in the data and the rest dropped.
+
+This file was then exported and used for all statistical testing and data visuals.
+
+
+
