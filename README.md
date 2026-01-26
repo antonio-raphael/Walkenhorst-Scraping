@@ -127,6 +127,15 @@ This data cleaning was done in R.
 
 ### 02-02 Fuzzy Joining
 
+The goal of this stage is to bridge the two disparate datasets –the scraped Walkenhorst catalogue and the cleaned Walmart product list— by identifying matching items despite differences in naming conventions. Since product names are rarely identical across vendors, we employ fuzzy string matching to facilitate the join.
+
+This process is executed in Python using the fuzzywuzzy and rapidfuzz libraries.
+
+We first normalized all the strings —by removing special characters and converting the strings to lowercase— in both datasets, and deleted duplicates from the Walmart dataset to prevent one-to-many match redundancies.
+
+We then define an algorithm that iterates through the Walkenhorst items and finds the best potential candidate in the Walmart dataset. We utilize the token_sort_ratio scorer, which is particularly effective here as it accounts for word reordering. Fuzzy matches scores ranged from 25% to 100%. We chose to retain matches with a score 65% or higher, as this threshold appeared to best manage the trade-off between maximizing the number of observations and ensuring the accuracy of the pairings.
+
+Finally, we merged the results with the original datasets, aligning product names, prices, and  characteristics of both Walkenhorst and Walmart.
 
 ### 02-03 Analysis File
 
