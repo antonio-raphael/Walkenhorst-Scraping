@@ -10,6 +10,8 @@ This script conducts the t-testing for the different categories.
 library(tidyverse)
 library(conflicted)
 library(broom) 
+library(sandwich)
+library(lmtest)
 ```
 
 
@@ -194,7 +196,6 @@ testDataUnit <- Results_Data |>
 
 ```
 
-
 ```{r}
 # environment/object management
 rm(list = ls(pattern = "First_Test|dataList|data|Categories|test_function|Results_Data"))
@@ -202,39 +203,13 @@ rm(list = ls(pattern = "First_Test|dataList|data|Categories|test_function|Result
 ```
 
 ```{r}
-write_csv(testDataUnit,
-          paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
-                 "Walkenhorst-Scraping/03. Analysis/Results/Price-Per-Unit-Tests.csv")) # export
-
-write_csv(testDataMarkup,
-          paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
-                 "Walkenhorst-Scraping/03. Analysis/Results/Markup-Tests.csv")) # export
-
-```
-
-```{r}
-First_Test_Data_Markup |> 
-  group_by(Walkenhorst_Category) |> 
-  summarise(Markup = mean(Markup)) |> 
-  ungroup() |> 
-  arrange(Markup) |> 
-  mutate(Markup = round(Markup, digits = 1),
-         label = paste0(Markup, "%")) |> 
-  mutate(Walkenhorst_Category = str_to_title(Walkenhorst_Category)) |> 
-  mutate(Walkenhorst_Category = factor(Walkenhorst_Category, 
-                                       levels = Walkenhorst_Category)) |> 
-  ggplot(mapping = aes(x = Walkenhorst_Category, y = Markup)) +
-  geom_bar(stat = "identity")+
-  labs(title = "Average Percent Mark-up (Comapred to Walmart) by Category",
-       x = NULL,
-       y = "Percent Mark-Up") +
-  geom_text(
-    aes(label = label),
-    hjust = -0.1
-  ) +
-  ylim(0, 160) +
-  theme_light()+
-  coord_flip()
-
+# write_csv(testDataUnit,
+#           paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+#                  "Walkenhorst-Scraping/03. Analysis/Results/Price-Per-Unit-Tests.csv")) # export
+# 
+# write_csv(testDataMarkup,
+#           paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+#                  "Walkenhorst-Scraping/03. Analysis/Results/Markup-Tests.csv")) # export
 
 ```
+

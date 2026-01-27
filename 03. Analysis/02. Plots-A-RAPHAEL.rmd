@@ -7,10 +7,10 @@ output:
     toc_float: true
 ---
 
-```{r, echo = FALSE, message = FALSE}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(conflicted)
-
+library(ggiraph)
 ```
 
 ```{r, echo = FALSE, message = FALSE}
@@ -216,9 +216,11 @@ First_Test_Data_Markup |>
   ggplot(mapping = aes(x = Walkenhorst_Category, y = Markup)) +
   geom_bar(stat = "identity",
            fill = "#01426A")+
-  labs(title = "Average Percent Mark-up (Comapred to Walmart) by Category",
+  labs(title = "Average Percent Mark-up by Category",
+       subtitle = "Walkenhorst Mark-up over Walmart",
        x = NULL,
-       y = "Percent Mark-Up") +
+       y = "Percent Mark-Up",
+       caption = "All Mark-Ups are significantly different than 0 at the \n1% level after Benjamini–Hochberg correction") +
   geom_text(
     aes(label = label),
     hjust = -0.1
@@ -242,7 +244,6 @@ First_Test_Data_Markup |>
         plot.caption       = element_text(color = "#6d6e71", hjust = 0)
   )
 
-
 ```
 
 # Distribution Differences {.tabset}
@@ -258,13 +259,15 @@ First_Test_Data |>
                          "Walkenhorst_unit_price"   = "Walkenhorst",
                          "Walmart_clean_unit_price" = "Walmart")) |> 
   ggplot(mapping = aes(x = Value, color = Vendor, fill = Vendor)) +
-  geom_density(alpha = .5,
+  geom_density(alpha = .7,
                color = NA)+
   scale_fill_manual(values = c("Walkenhorst" = "#01426A", 
                                "Walmart"     = "#F2CC38"))+
   labs(title = "Distribution of Product Price per Ounce, Walmart v. Walkenhorst - All Products",
        x = "Price per Ounce",
-       y = NULL) +
+       y = NULL,
+       caption = "Price-per-unit difference is significant at the 1% \nlevel after Benjamini–Hochberg correction") +
+  xlim(0, 4)+
   theme_light()+
   theme(plot.title         = element_text(vjust = 1),
         plot.subtitle      = element_text(color = "#6d6e71", hjust = 0),
@@ -298,13 +301,14 @@ First_Test_Data |>
                          "Walkenhorst_unit_price"   = "Walkenhorst",
                          "Walmart_clean_unit_price" = "Walmart")) |> 
   ggplot(mapping = aes(x = Value, fill = Vendor)) +
-  geom_density(alpha = .5,
+  geom_density(alpha = .7,
                color = NA)+
   scale_fill_manual(values = c("Walkenhorst" = "#01426A", 
                                "Walmart"     = "#F2CC38"))+
   labs(title = "Distribution of Price per Ounce, Walmart v. Walkenhorst - Seafood Products",
        x = "Price per Ounce",
-       y = NULL) +
+       y = NULL,
+       caption = "Price-per-unit difference is significant at the 1% \nlevel after Benjamini–Hochberg correction") +
   theme_light()+
   theme(plot.title         = element_text(vjust = 1),
         plot.subtitle      = element_text(color = "#6d6e71", hjust = 0),
@@ -325,6 +329,48 @@ First_Test_Data |>
   )
 
 ```
+
+## Snacks
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+First_Test_Data |> 
+  dplyr::filter(Walkenhorst_Category == "SNACKS") |> 
+  select(Walmart_clean_unit_price, Walkenhorst_unit_price) |> 
+  gather(key = "Vendor",
+         value = "Value") |> 
+  mutate(Vendor = recode(Vendor,
+                         "Walkenhorst_unit_price"   = "Walkenhorst",
+                         "Walmart_clean_unit_price" = "Walmart")) |> 
+  ggplot(mapping = aes(x = Value, fill = Vendor)) +
+  geom_density(alpha = .7,
+               color = NA)+
+  scale_fill_manual(values = c("Walkenhorst" = "#01426A", 
+                               "Walmart"     = "#F2CC38"))+
+  labs(title = "Distribution of Price per Ounce, Walmart v. Walkenhorst - Snack Products",
+       x = "Price per Ounce",
+       y = NULL,
+       caption = "Price-per-unit difference is significant at the 1% \nlevel after Benjamini–Hochberg correction") +
+  theme_light()+
+  theme(plot.title         = element_text(vjust = 1),
+        plot.subtitle      = element_text(color = "#6d6e71", hjust = 0),
+        axis.text.x        = element_text(color = "black"),
+        axis.text.y        = element_text(color = "#6d6e71"),
+        axis.title.x       = element_text(color = "black"),
+        axis.title.y       = element_text(color = "black"),
+        axis.line          = element_line(size = .2),
+        panel.grid         = element_line(linetype = 1, color = "#6d6e71"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.border       = element_blank(),
+        legend.position    = "bottom",
+        legend.text        = element_text(color = "#6d6e71"),
+        legend.title       = element_text(color = "#6d6e71"),
+        plot.caption       = element_text(color = "#6d6e71", hjust = 0)
+  )
+
+
+```
+
 
 
 

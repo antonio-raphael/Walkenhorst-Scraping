@@ -1,0 +1,54 @@
+---
+title: "Regression Modelling"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(conflicted)
+library(broom) 
+library(sandwich)
+library(lmtest)
+```
+
+```{r}
+data <- read_csv(paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+                        "Walkenhorst-Scraping/03. Analysis/Analysis-Data/Analysis-Data.csv"))
+
+```
+
+```{r}
+# Regressions!
+
+Regression_Data <- data |> 
+  select(-c(Walkenhorst_product,
+            Walmart_product,
+            kosher,
+            Markup)) |> # drop extra variables
+  dplyr::filter(Walkenhorst_Category != "All Products") |> # drop all products field
+  gather(key   = "Vendor",
+         value = "unit_price",
+         -c("Walkenhorst_Category")) |> # wide to long keeping category
+  mutate(Vendor = recode(Vendor,
+                         "Walkenhorst_unit_price" = "1",
+                         "Walmart_clean_unit_price" = "0"), # recode vendor to walkenhorst indicator
+         Vendor = as.numeric(Vendor), # numeric
+         unit_price = as.numeric(unit_price)) 
+
+# Test_Data_Regression <- lm(unit_price ~ Vendor + Walkenhorst_Category,
+#                            data = Regression_Data)
+
+Log_Test_Data_Regression <- lm(log(unit_price) ~ Vendor + Walkenhorst_Category,
+                               data = Regression_Data) # log-level model with cateogry controls
+
+vcov_cl <- clubSandwich::vcovCR(Log_Test_Data_Regression, 
+                                cluster = Regression_Data$Walkenhorst_Category,
+                                type = "CR2") # cluster robust standard errors
+
+summary(Log_Test_Data_Regression) # original model summary, can use for R^2
+
+coeftest(Log_Test_Data_Regression, vcov = vcov_cl) # coefficient estimates adjusting for clusters. Use for significance results
+
+
+```
+
