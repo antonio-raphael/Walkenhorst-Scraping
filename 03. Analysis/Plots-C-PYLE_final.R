@@ -20,3 +20,12 @@ ggplot(data, aes(x = Walkenhorst_Category,
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
 ggsave(paste0(path,"box_chart.png"))
+
+ggplot(data, aes(x = Markup)) +
+  geom_histogram(bins = 100) +
+  labs(
+    title = "Histogram of Relative Price Difference Between Walkenhorst and Walmart Items",
+    y = "Number of Observations",
+    x = "Relative Price Difference"
+  ) + theme_bw() +
+  theme(legend.text = element_text(size = 4))
