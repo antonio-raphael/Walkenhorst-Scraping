@@ -164,7 +164,7 @@ This file was then exported and used for all statistical testing and data visual
 ## 03. Analysis
 
 This performs various aspects of the data visualization and statistical testing. For the purposes
-of this project we simply preform t tests and and visualize the data.
+of this project we simply preform t tests and visualize the data.
 
 ### 01. T-Testing
 
