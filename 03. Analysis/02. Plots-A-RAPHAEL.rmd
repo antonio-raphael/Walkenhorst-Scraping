@@ -10,13 +10,15 @@ output:
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(conflicted)
-library(ggiraph)
 ```
 
 ```{r, echo = FALSE, message = FALSE}
 data <- read_csv(paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
                         "Walkenhorst-Scraping/03. Analysis/Analysis-Data/Analysis-Data.csv"))
 
+# 
+# t_test <- read_csv(paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+#                         "Walkenhorst-Scraping/03. Analysis/Results/Markup-Tests.csv"))
 ```
 
 ```{r, echo = FALSE, message = FALSE}
@@ -203,13 +205,22 @@ rm(list = ls(pattern = "dataList|data|Categories|test_function|Results_Data"))
 
 # Percent Mark-Up Bar Chart
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
-First_Test_Data_Markup |> 
+Plot_Info <- testDataMarkup |> 
+  select(Category,
+         t_statistic,
+         Adjusted_P_Value) |> 
+  rename(Walkenhorst_Category = Category)
+
+
+Markup_Plot <- First_Test_Data_Markup |> 
   group_by(Walkenhorst_Category) |> 
   summarise(Markup = mean(Markup)) |> 
   ungroup() |> 
   arrange(Markup) |> 
   mutate(Markup = round(Markup, digits = 1),
-         label = paste0(Markup, "%")) |> 
+         label = paste0(Markup, "%***")) |> 
+  left_join(Plot_Info,
+            by = "Walkenhorst_Category") |> 
   mutate(Walkenhorst_Category = str_to_title(Walkenhorst_Category)) |> 
   mutate(Walkenhorst_Category = factor(Walkenhorst_Category, 
                                        levels = Walkenhorst_Category)) |> 
@@ -225,6 +236,13 @@ First_Test_Data_Markup |>
     aes(label = label),
     hjust = -0.1
   ) +
+  # geom_text(
+  # aes(label = paste0("T-Statistic: ", round(t_statistic, digits = 1)), 
+  #     x = Walkenhorst_Category,
+  #     y = Markup / 2),
+  #     color = "white",
+  # hjust = 0.5
+  # ) + 
   ylim(0, 160) +
   coord_flip() +
   theme_light()+
@@ -244,13 +262,21 @@ First_Test_Data_Markup |>
         plot.caption       = element_text(color = "#6d6e71", hjust = 0)
   )
 
+ggsave(
+  filename = paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+                    "Walkenhorst-Scraping/03. Analysis/Plots/Mark-Up-Plot.jpeg"),
+  plot     = Markup_Plot,
+  width    = 8,
+  height   = 6,
+  dpi      = 300
+)
 ```
 
 # Distribution Differences {.tabset}
 
 ## All Products
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
-First_Test_Data |> 
+All_Products <- First_Test_Data |> 
   dplyr::filter(Walkenhorst_Category == "All Products") |> 
   select(Walmart_clean_unit_price, Walkenhorst_unit_price) |> 
   gather(key = "Vendor",
@@ -287,12 +313,19 @@ First_Test_Data |>
         plot.caption       = element_text(color = "#6d6e71", hjust = 0)
   )
 
-
+ggsave(
+  filename = paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+                    "Walkenhorst-Scraping/03. Analysis/Plots/All-Products-Dist.jpeg"),
+  plot     = All_Products,
+  width    = 8,
+  height   = 6,
+  dpi      = 300
+)
 ```
 
 ## Seafood
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
-First_Test_Data |> 
+Seafood <- First_Test_Data |> 
   dplyr::filter(Walkenhorst_Category == "SEAFOOD") |> 
   select(Walmart_clean_unit_price, Walkenhorst_unit_price) |> 
   gather(key = "Vendor",
@@ -328,11 +361,19 @@ First_Test_Data |>
         plot.caption       = element_text(color = "#6d6e71", hjust = 0)
   )
 
+ggsave(
+  filename = paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+                    "Walkenhorst-Scraping/03. Analysis/Plots/Seafood-Dist.jpeg"),
+  plot     = Seafood,
+  width    = 8,
+  height   = 6,
+  dpi      = 300
+)
 ```
 
 ## Snacks
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
-First_Test_Data |> 
+Snacks <- First_Test_Data |> 
   dplyr::filter(Walkenhorst_Category == "SNACKS") |> 
   select(Walmart_clean_unit_price, Walkenhorst_unit_price) |> 
   gather(key = "Vendor",
@@ -368,7 +409,14 @@ First_Test_Data |>
         plot.caption       = element_text(color = "#6d6e71", hjust = 0)
   )
 
-
+ggsave(
+  filename = paste0("/Users/antonioraphael/Documents/PROJECT-CLONES/",
+                    "Walkenhorst-Scraping/03. Analysis/Plots/Snacks-Dist.jpeg"),
+  plot     = Snacks,
+  width    = 8,
+  height   = 6,
+  dpi      = 300
+)
 ```
 
 

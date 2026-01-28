@@ -52,3 +52,15 @@ coeftest(Log_Test_Data_Regression, vcov = vcov_cl) # coefficient estimates adjus
 
 ```
 
+
+
+
+
+
+
+California produces huge volumes of criminal legal data with nearly:
+800,000 arrests per year,
+600,000 bookings into county jails, 
+35,000 prison admissions annually
+
+The state is set to spend over $18 billion on the criminal legal system in fiscal year 2024.
