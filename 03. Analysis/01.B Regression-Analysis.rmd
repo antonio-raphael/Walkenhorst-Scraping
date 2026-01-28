@@ -48,8 +48,6 @@ vcov_cl <- clubSandwich::vcovCR(Log_Test_Data_Regression,
 summary(Log_Test_Data_Regression) # original model summary, can use for R^2
 
 coeftest(Log_Test_Data_Regression, vcov = vcov_cl) # coefficient estimates adjusting for clusters. Use for significance results
-
-
 ```
 
 
