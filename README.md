@@ -21,6 +21,7 @@ Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within th
 # Directory Tree
 
 ```text
+.
 ├── 01. Scraping
 │   ├── PDF-Scraping
 │   │   ├── Catalogue-PDF-Scraping.rmd
@@ -58,9 +59,27 @@ Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within th
 │       ├── Fuzzy-Join-First-Attempt.rmd
 │       └── Fuzzy-Join-Second-Attempt.py
 ├── 03. Analysis
+│   ├── 01.A T-Testing.rmd
+│   ├── 01.B Regression-Analysis.rmd
+│   ├── 02.-Plots-A-RAPHAEL.html
+│   ├── 02.A Plots-A-RAPHAEL.rmd
+│   ├── 02.B Tables_t_tests_Anne-FINAL.ipynb
 │   ├── Analysis-Data
 │   │   └── Analysis-Data.csv
-│   └── T-Testing.rmd
+│   ├── Plots
+│   │   ├── All-Products-Dist.jpeg
+│   │   ├── Mark-Up-Plot.jpeg
+│   │   ├── Seafood-Dist.jpeg
+│   │   └── Snacks-Dist.jpeg
+│   ├── Plots-C-PYLE.R
+│   ├── Plots-C-PYLE_final.R
+│   └── Results
+│       ├── Adjusted_Regression_Results.csv
+│       ├── Markup-Tests.csv
+│       ├── Markup_TestsTable.png
+│       ├── Price-Per-Unit-Tests.csv
+│       ├── Regression_ResultsTable_Final.png
+│       └── UnitPrice_TestsTable.png
 ├── README.md
 ├── Submissions
 │   ├── Initial Research and Data Plan.pdf
@@ -166,9 +185,26 @@ This file was then exported and used for all statistical testing and data visual
 This performs various aspects of the data visualization and statistical testing. For the purposes
 of this project we simply preform t tests and visualize the data.
 
-### 01. T-Testing
+### 01.A T-Testing
 
 This tests for differences between the price per unit between walmart and walkenhorst, and if 
 the percent mark up is greater than 0. There are a total of 16 different tests performed by category
 for each variable for a total of 32 tests, and we apply a Benjamini–Hochberg correction to ensure 
 validity of our results.
+
+### 01.B Regression Analysis
+
+Here regression analysis is performed to measure the Walkenhorst markup. The regression is fairly
+simple, the log unit price is regressed on a vendor dummy 1-Walkenhorst, 0-Walmart, with
+controls for each product category. There were 25 different categories, and since we can expect
+important variation to occur within categories the decision was made to apply the 
+Bell–McCaffrey (2002) bias-reduced correction to the model standard errors.
+
+### 02.A Plots
+
+GGplot code producing a bar chart of the percent markup of walkenhorst as well as density
+distribution differences of unit prices, also box plots of walkenhorst markup
+
+### 02.B Regression Tables_t_tests
+
+Python code creating clean, report ready tables for regressions and t-tests.
