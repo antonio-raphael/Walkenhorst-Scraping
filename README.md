@@ -23,34 +23,36 @@ Walmart to quantify the hypothesized monopoly power Walkenhorst exerts within th
 ```text
 .
 ├── 01. Scraping
-│   ├── PDF-Scraping
+│   ├── 01. PDF-Scraping
 │   │   ├── Catalogue-PDF-Scraping.rmd
 │   │   └── Catalogue_Recoded_Categories.csv
-│   ├── Scraped-JSON-Files
-│   │   ├── Full-Products-Data
-│   │   │   ├── Products_Categories.csv
-│   │   │   └── Products_Only.csv
-│   │   └── Scraped-Data.zip
-│   └── Web-Scraping
-│       ├── Bottled-Water-Scraping.py
-│       ├── Coffee-Scraping.py
-│       ├── Condiments-Scraping.py
-│       ├── Cookies-Scraping.py
-│       ├── Creamers-Scraping.py
-│       ├── Diet-Supplements-Scraping.py
-│       ├── Drink-Mixes-Scraping.py
-│       ├── Fruit-Drink-Mix-Scraping.py
-│       ├── Honey-Scraping.py
-│       ├── Hot-Sauce-Scraping.py
-│       ├── Milk-Drink-Mix-Scraping.py
-│       ├── Nutrition-Supplements-Scraping.py
-│       ├── Sauce-Scraping.py
-│       ├── Soda-Drink-Mix-Scraping.py
-│       ├── Soft-Drinks-Scraping.py
-│       ├── Spreads-Scraping.py
-│       ├── Webscraping-Crackers-Attempt-1.py
-│       ├── soft-drinks-17oz-scraping.py
-│       └── sports-drink-mix-scraping.py
+│   ├── 02. Web-Scraping
+│   │   ├── Commented-Example-Scraping-Script.py
+│   │   └── Individual-Scraping-Scripts
+│   │       ├── Bottled-Water-Scraping.py
+│   │       ├── Coffee-Scraping.py
+│   │       ├── Condiments-Scraping.py
+│   │       ├── Cookies-Scraping.py
+│   │       ├── Creamers-Scraping.py
+│   │       ├── Diet-Supplements-Scraping.py
+│   │       ├── Drink-Mixes-Scraping.py
+│   │       ├── Fruit-Drink-Mix-Scraping.py
+│   │       ├── Honey-Scraping.py
+│   │       ├── Hot-Sauce-Scraping.py
+│   │       ├── Milk-Drink-Mix-Scraping.py
+│   │       ├── Nutrition-Supplements-Scraping.py
+│   │       ├── Sauce-Scraping.py
+│   │       ├── Soda-Drink-Mix-Scraping.py
+│   │       ├── Soft-Drinks-Scraping.py
+│   │       ├── Spreads-Scraping.py
+│   │       ├── Webscraping-Crackers-Attempt-1.py
+│   │       ├── soft-drinks-17oz-scraping.py
+│   │       └── sports-drink-mix-scraping.py
+│   └── 02.B Scraped-JSON-Files
+│       ├── Full-Products-Data
+│       │   ├── Products_Categories.csv
+│       │   └── Products_Only.csv
+│       └── Scraped-Data.zip
 ├── 02. Combining-Merging
 │   ├── 01. Combining-Scraped-Data.rmd
 │   ├── 02. Products-Fuzzy-Merging.ipynb
